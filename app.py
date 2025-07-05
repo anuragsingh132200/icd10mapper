@@ -60,66 +60,65 @@ def main():
     col1, col2 = st.columns([2, 1])
     
     with col1:
-        st.header("📁 Data Upload")
-        uploaded_file = st.file_uploader(
-            "Upload CSV file with patient diagnoses",
-            type=['csv'],
-            help="CSV should contain patient diagnoses in list format"
-        )
+        st.header("📁 Data Loading")
         
-        if uploaded_file is not None:
-            try:
-                # Process uploaded file
-                processor = DataProcessor()
-                df = processor.load_csv(uploaded_file)
-                
-                st.success(f"✅ File uploaded successfully! Found {len(df)} patient records.")
-                
-                # Display sample data
-                st.subheader("📊 Data Preview")
-                st.dataframe(df.head(), use_container_width=True)
-                
-                # Initialize mapper if not already done
-                if st.session_state.mapper is None:
-                    with st.spinner("🔄 Initializing ICD-10 mapper..."):
-                        st.session_state.mapper = ICD10Mapper()
-                
-                # Process diagnoses
-                if st.button("🚀 Start Mapping", type="primary"):
-                    with st.spinner("🔍 Mapping diagnoses to ICD-10 codes..."):
-                        progress_bar = st.progress(0)
+        # Auto-load the CSV file from attached assets
+        csv_path = "attached_assets/Diagnoses_list - Sheet1 (1)_1751711430219.csv"
+        
+        try:
+            # Process the CSV file
+            processor = DataProcessor()
+            df = processor.load_csv_from_path(csv_path)
+            
+            st.success(f"✅ File loaded successfully! Found {len(df)} patient records.")
+            st.info(f"📁 Using file: {csv_path}")
+            
+            # Display sample data
+            st.subheader("📊 Data Preview")
+            st.dataframe(df.head(), use_container_width=True)
+            
+            # Initialize mapper if not already done
+            if st.session_state.mapper is None:
+                with st.spinner("🔄 Initializing ICD-10 mapper..."):
+                    st.session_state.mapper = ICD10Mapper()
+            
+            # Process diagnoses
+            if st.button("🚀 Start Mapping", type="primary"):
+                with st.spinner("🔍 Mapping diagnoses to ICD-10 codes..."):
+                    progress_bar = st.progress(0)
+                    
+                    # Process each row
+                    results = []
+                    for i, (idx, row) in enumerate(df.iterrows()):
+                        diagnoses = processor.parse_diagnoses(str(row['Diagnoses_list']))
                         
-                        # Process each row
-                        results = []
-                        for idx, row in df.iterrows():
-                            diagnoses = processor.parse_diagnoses(row['Diagnoses_list'])
-                            
-                            patient_results = []
-                            for diagnosis in diagnoses:
-                                mapping = st.session_state.mapper.map_diagnosis(
-                                    diagnosis, 
-                                    confidence_threshold,
-                                    max_suggestions
-                                )
-                                patient_results.append(mapping)
-                            
-                            results.append({
-                                'patient_id': idx + 1,
-                                'original_diagnoses': diagnoses,
-                                'mappings': patient_results
-                            })
-                            
-                            # Update progress
-                            progress_bar.progress((idx + 1) / len(df))
+                        patient_results = []
+                        for diagnosis in diagnoses:
+                            mapping = st.session_state.mapper.map_diagnosis(
+                                diagnosis, 
+                                confidence_threshold,
+                                max_suggestions
+                            )
+                            patient_results.append(mapping)
                         
-                        st.session_state.mapping_results = results
-                        st.session_state.processed_data = df
+                        results.append({
+                            'patient_id': i + 1,
+                            'original_diagnoses': diagnoses,
+                            'mappings': patient_results
+                        })
                         
-                        st.success("✅ Mapping completed!")
-                        st.rerun()
-                        
-            except Exception as e:
-                st.error(f"❌ Error processing file: {str(e)}")
+                        # Update progress
+                        progress_bar.progress((i + 1) / len(df))
+                    
+                    st.session_state.mapping_results = results
+                    st.session_state.processed_data = df
+                    
+                    st.success("✅ Mapping completed!")
+                    st.rerun()
+                    
+        except Exception as e:
+            st.error(f"❌ Error processing file: {str(e)}")
+            st.info("Make sure the CSV file exists in the attached_assets folder.")
     
     with col2:
         st.header("📋 Instructions")

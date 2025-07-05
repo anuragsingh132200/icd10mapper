@@ -31,6 +31,27 @@ class DataProcessor:
         except Exception as e:
             raise Exception(f"Error loading CSV file: {str(e)}")
     
+    def load_csv_from_path(self, file_path: str) -> pd.DataFrame:
+        """Load and validate CSV file from file path"""
+        try:
+            # Read the CSV file
+            df = pd.read_csv(file_path)
+            
+            # Validate structure
+            if 'Diagnoses_list' not in df.columns:
+                raise ValueError("CSV must contain 'Diagnoses_list' column")
+            
+            # Remove empty rows
+            df = df.dropna(subset=['Diagnoses_list'])
+            
+            # Reset index
+            df = df.reset_index(drop=True)
+            
+            return df
+            
+        except Exception as e:
+            raise Exception(f"Error loading CSV file: {str(e)}")
+    
     def parse_diagnoses(self, diagnoses_text: str) -> List[str]:
         """Parse diagnoses from text format (list string or delimited text)"""
         if pd.isna(diagnoses_text):
@@ -117,17 +138,17 @@ class DataProcessor:
             'validation_errors': []
         }
         
-        for idx, row in df.iterrows():
+        for i, (idx, row) in enumerate(df.iterrows()):
             try:
-                diagnoses = self.parse_diagnoses(row['Diagnoses_list'])
+                diagnoses = self.parse_diagnoses(str(row['Diagnoses_list']))
                 if diagnoses:
                     stats['valid_rows'] += 1
                     stats['total_diagnoses'] += len(diagnoses)
                 else:
                     stats['empty_diagnoses'] += 1
-                    stats['validation_errors'].append(f"Row {idx + 1}: No valid diagnoses found")
+                    stats['validation_errors'].append(f"Row {i + 1}: No valid diagnoses found")
             except Exception as e:
-                stats['validation_errors'].append(f"Row {idx + 1}: {str(e)}")
+                stats['validation_errors'].append(f"Row {i + 1}: {str(e)}")
         
         return stats
     
@@ -136,7 +157,7 @@ class DataProcessor:
         samples = []
         
         for _, row in df.head(n_samples).iterrows():
-            diagnoses = self.parse_diagnoses(row['Diagnoses_list'])
+            diagnoses = self.parse_diagnoses(str(row['Diagnoses_list']))
             if diagnoses:
                 samples.extend(diagnoses[:2])  # Take first 2 diagnoses per row
         
