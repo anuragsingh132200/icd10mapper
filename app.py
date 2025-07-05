@@ -113,7 +113,13 @@ def main():
                     st.session_state.mapping_results = results
                     st.session_state.processed_data = df
                     
+                    # Generate and save consolidated output CSV
+                    csv_output = export_results_to_csv()
+                    with open("output.csv", "w", encoding="utf-8") as f:
+                        f.write(csv_output)
+                    
                     st.success("✅ Mapping completed!")
+                    st.success("📁 Consolidated results saved to output.csv")
                     st.rerun()
                     
         except Exception as e:
@@ -143,6 +149,15 @@ def main():
             st.metric("Total Diagnoses", total_diagnoses)
             st.metric("High Confidence", high_confidence)
             st.metric("Accuracy Rate", f"{(high_confidence/total_diagnoses)*100:.1f}%")
+            
+            # Check if output.csv exists
+            import os
+            if os.path.exists("output.csv"):
+                file_size = os.path.getsize("output.csv") / 1024  # KB
+                st.markdown("---")
+                st.markdown("### 📁 Output File")
+                st.success(f"✅ output.csv ready ({file_size:.1f} KB)")
+                st.info("Scroll down to the Export section to download")
     
     # Display mapping results
     if st.session_state.mapping_results:
@@ -162,27 +177,51 @@ def main():
         
         # Export functionality
         st.header("📥 Export Results")
+        
+        # Main consolidated output file
+        st.subheader("📁 Consolidated Output")
+        csv_data = export_results_to_csv()
+        
+        # Show preview of CSV content
+        if st.checkbox("📋 Preview CSV Content", help="Show a preview of the output.csv file"):
+            try:
+                preview_df = pd.read_csv(StringIO(csv_data))
+                st.dataframe(preview_df.head(10), use_container_width=True)
+                st.info(f"Showing first 10 rows of {len(preview_df)} total records")
+            except Exception as e:
+                st.error(f"Error previewing CSV: {str(e)}")
+        
+        st.download_button(
+            label="💾 Download output.csv",
+            data=csv_data,
+            file_name="output.csv",
+            mime="text/csv",
+            type="primary",
+            help="Download the complete mapping results in CSV format"
+        )
+        
+        # Additional export options
+        st.subheader("📋 Additional Formats")
         col1, col2 = st.columns(2)
         
         with col1:
-            if st.button("📋 Export to CSV"):
-                csv_data = export_results_to_csv()
-                st.download_button(
-                    label="💾 Download CSV",
-                    data=csv_data,
-                    file_name="icd10_mappings.csv",
-                    mime="text/csv"
-                )
+            st.download_button(
+                label="📊 Custom CSV Export",
+                data=csv_data,
+                file_name="icd10_mappings.csv",
+                mime="text/csv",
+                help="Download with custom filename"
+            )
         
         with col2:
-            if st.button("📋 Export JSON"):
-                json_data = json.dumps(st.session_state.mapping_results, indent=2)
-                st.download_button(
-                    label="💾 Download JSON",
-                    data=json_data,
-                    file_name="icd10_mappings.json",
-                    mime="application/json"
-                )
+            json_data = json.dumps(st.session_state.mapping_results, indent=2)
+            st.download_button(
+                label="📋 JSON Export",
+                data=json_data,
+                file_name="icd10_mappings.json",
+                mime="application/json",
+                help="Download in JSON format"
+            )
 
 def display_overview():
     """Display overview of mapping results"""
