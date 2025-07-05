@@ -17,6 +17,20 @@ This application solves the challenge of mapping free-text medical diagnoses to 
 - **Real-time Processing**: Progress tracking for large datasets
 - **Comprehensive Coverage**: Supports common medical conditions across multiple categories
 
+## 📸 Screenshots
+
+### Main Interface
+![Main Interface](attached_assets/Screenshot%202025-07-05%20162026_1751712668053.png)
+*The main application interface showing data loading, preview, and instructions*
+
+### Overview Dashboard
+![Overview Dashboard](attached_assets/Screenshot%202025-07-05%20162039_1751712668052.png)
+*Overview tab displaying confidence distribution and top ICD-10 codes*
+
+### Detailed Results
+![Detailed Results](attached_assets/Screenshot%202025-07-05%20162053_1751712668051.png)
+*Detailed results view showing individual diagnosis mappings with confidence scores and alternatives*
+
 ## 🚀 Quick Start
 
 ### Prerequisites
