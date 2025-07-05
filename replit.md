@@ -81,6 +81,7 @@ The application is designed for Replit deployment with:
 ## Changelog
 
 - July 05, 2025. Initial setup
+- July 05, 2025. Modified application to auto-load CSV from attached assets, added comprehensive README documentation
 
 ## User Preferences
 
